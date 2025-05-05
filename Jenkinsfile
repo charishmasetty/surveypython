@@ -2,47 +2,44 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "gcr.io/group-python/surveypython-app:cleanlatest"
         PROJECT_ID = "group-python"
-        CLUSTER = "group-python-cluster"
-        ZONE = "us-east1-b"
+        IMAGE_NAME = "surveypython-app"
+        IMAGE_TAG = "cleanlatest"
+        GCR_URL = "gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
+        DEPLOY_YAML = "deployment.yaml"
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-key')
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git url: 'https://your-git-repo-url.git', branch: 'main'
+                git 'https://github.com/charishmasetty/surveypython.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh 'docker build -t $IMAGE_NAME .'
-                }
+                sh 'docker build -t $GCR_URL .'
+            }
+        }
+
+        stage('Authenticate with GCR') {
+            steps {
+                sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
+                sh 'gcloud auth configure-docker'
             }
         }
 
         stage('Push to GCR') {
             steps {
-                withCredentials([file(credentialsId: 'gcr-json-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                    sh 'gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS'
-                    sh 'gcloud auth configure-docker --quiet'
-                    sh 'docker push $IMAGE_NAME'
-                }
+                sh 'docker push $GCR_URL'
             }
         }
 
-        stage('Deploy to GKE') {
+        stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([file(credentialsId: 'gcr-json-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                    sh '''
-                    gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
-                    gcloud container clusters get-credentials $CLUSTER --zone $ZONE --project $PROJECT_ID
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f service.yaml
-                    '''
-                }
+                sh 'kubectl apply -f $DEPLOY_YAML'
+                sh 'kubectl rollout restart deployment surveypython-app'
             }
         }
     }
