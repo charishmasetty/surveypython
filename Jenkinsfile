@@ -4,7 +4,7 @@ pipeline {
     environment {
         PROJECT_ID = "group-python"
         IMAGE_NAME = "surveypython-app"
-        IMAGE_TAG = "cleanlatest"
+        IMAGE_TAG = "v1-${new Date().getTime()}" // dynamic timestamp tag
         GCR_URL = "gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
         DEPLOY_YAML = "deployment.yaml"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-key')
@@ -19,7 +19,8 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $GCR_URL .'
+                sh 'docker buildx create --use || echo "buildx already exists"'
+                sh 'docker buildx build --platform=linux/amd64 --no-cache -t $GCR_URL --push .'
             }
         }
 
@@ -30,9 +31,10 @@ pipeline {
             }
         }
 
-        stage('Push to GCR') {
+        stage('Update YAML with New Image Tag') {
             steps {
-                sh 'docker push $GCR_URL'
+                // Update image tag inside deployment.yaml
+                sh "sed -i '' 's|image: gcr.io/.\\+|image: $GCR_URL|' $DEPLOY_YAML"
             }
         }
 
