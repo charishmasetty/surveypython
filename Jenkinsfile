@@ -39,6 +39,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh 'kubectl apply -f $DEPLOY_YAML'
+                sleep(time: 2, unit: 'SECONDS')
                 sh 'kubectl rollout restart deployment surveypython-app'
             }
         }
