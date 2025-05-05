@@ -4,7 +4,7 @@ pipeline {
     environment {
         PROJECT_ID = "group-python"
         IMAGE_NAME = "surveypython-app"
-        IMAGE_TAG = "v1-${new Date().getTime()}" // dynamic timestamp tag
+        IMAGE_TAG = "v1-${BUILD_NUMBER}"
         GCR_URL = "gcr.io/${PROJECT_ID}/${IMAGE_NAME}:${IMAGE_TAG}"
         DEPLOY_YAML = "deployment.yaml"
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-key')
@@ -19,8 +19,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker buildx create --use || echo "buildx already exists"'
-                sh 'docker buildx build --platform=linux/amd64 --no-cache -t $GCR_URL --push .'
+                sh 'docker buildx build --platform=linux/amd64 -t $GCR_URL --push .'
             }
         }
 
@@ -31,18 +30,15 @@ pipeline {
             }
         }
 
-        stage('Update YAML with New Image Tag') {
+        stage('Update Kubernetes Deployment') {
             steps {
-                // Update image tag inside deployment.yaml
-                sh "sed -i '' 's|image: gcr.io/.\\+|image: $GCR_URL|' $DEPLOY_YAML"
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh 'kubectl apply -f $DEPLOY_YAML'
-                sleep(time: 2, unit: 'SECONDS')
-                sh 'kubectl rollout restart deployment surveypython-app'
+                script {
+                    // Patch deployment image with new tag
+                    sh """
+                        kubectl set image deployment/surveypython-app surveypython-app=$GCR_URL
+                        kubectl rollout status deployment/surveypython-app
+                    """
+                }
             }
         }
     }
