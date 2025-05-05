@@ -13,21 +13,16 @@ spec:
         app: surveypython-app
     spec:
       containers:
-      - name: surveypython-app
-        image: gcr.io/group-python/surveypython-app:cleanlatest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8080
-        env:
-        - name: DB_USER
-          value: "admin"
-        - name: DB_PASS
-          value: "surveypass"
-        - name: DB_NAME
-          value: "surveypythondb"
-        - name: DB_HOST
-          value: "surveypythondb.c9wc8aya24by.us-east-1.rds.amazonaws.com"
-        - name: DB_PORT
-          value: "3306"
-      imagePullSecrets:
-      - name: gcr-json-key
+        - name: surveypython-app
+          image: gcr.io/group-python/surveypython-app:v1-1746423681
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_PASSWORD
+              value: "surveypass"
+            - name: DB_NAME
+              value: "surveypythondb"
+            - name: DB_HOST
+              value: "surveypythondb.c9wc8aya24by.us-east-1.rds.amazonaws.com"
+            - name: DB_PORT
+              value: "3306"
