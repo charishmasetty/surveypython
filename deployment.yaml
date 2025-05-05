@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: surveypython-app
-          image: gcr.io/group-python/surveypython-app:v1-1746423681
+          image: gcr.io/group-python/surveypython-app:v1-1746424296
           ports:
             - containerPort: 8080
           env:
