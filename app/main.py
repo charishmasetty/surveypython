@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from . import models, database, routes
 
-#models.Base.metadata.drop_all(bind=database.engine)
+models.Base.metadata.drop_all(bind=database.engine)
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
