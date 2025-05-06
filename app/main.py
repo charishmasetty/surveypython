@@ -11,6 +11,6 @@ app.include_router(routes.router, prefix="/api")
 def health():
     return {"status": "ok"}
 
-@app.get("/")
-def read_root():
-    return {"message": "🚀 Pipeline deployment success!"}
+#@app.get("/")
+#def read_root():
+#    return {"message": "🚀 Pipeline deployment success!"}
