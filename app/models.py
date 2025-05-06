@@ -16,4 +16,4 @@ class Survey(Base):
     date_of_survey = Column(Date)
     liked_most = Column(String(100))
     interest_source = Column(String(100))
-    recommendation = Column(String(20))  # Yes/No
+    recommendation = Column(String(20))
